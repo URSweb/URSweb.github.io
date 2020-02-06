@@ -1,7 +1,184 @@
-<!DOCTYPE html>
 <html>
+<title>Work In Progress</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<head>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+
 <body>
-<h1>Hello World</h1>
-<p>I'm hosted with GitHub Pages. Test Commit</p>
+
+
+	<script language="javascript">
+	
+	function getHeaders(line){
+	var headers = line.replace(/[" [\]]/g, "").replace("]", "").replace("[","").replace('\n', '').split(',');
+	return headers.slice(1,headers.length);
+	}
+	
+	function extractResponse(data){
+	var days = [];
+	var freeTimes = data.split(",").slice(1)
+	for (var timeArr of freeTimes) {
+		days.push(timeArr.split(';'));
+	}
+	return days;
+	}
+	
+	function getConvenientTime (responses, day) {
+	var result = [];
+	
+	if (responses.length == 1) {
+		return 'Done';
+	}
+	var index = 0;
+	while (responses.length > index) {
+		if (responses[index][day].length == 0) {
+			index++;
+			continue;
+		}
+		var el = responses[index][day].shift();
+		var counter = 1;
+		if (el == '') {
+			continue;
+		}
+		var usrIndex = 0;
+		while (usrIndex < responses.length) {
+			var newArr = [];
+			for (var element of responses[usrIndex][day]) {
+				if (element == el) {
+					counter++;
+				}
+				else {
+					newArr.push(element);
+				}
+			}
+			responses[usrIndex][day] = newArr;
+			usrIndex++;
+		}
+		result.push([counter, el]);
+	}
+	return result.slice(0, result.length).reverse()
+}
+	
+function process(){
+
+var text = document.getElementById("InputData").value
+
+var lines = text.split(/\r?\n/)
+
+ var lineNum = 0;
+ var responses = [];
+ var headers = [];
+for (var line of lines) {
+ lineNum++;
+	if (lineNum == 1) {
+		var headers = getHeaders(line);
+		continue;
+	}
+	responses.push(extractResponse(line.replace(/"/g, "").replace("\n", "")));
+}
+
+
+var bestTimesForDays = [];
+var xval = [];
+var yval = [];
+var sizes = [];
+var texts = [];
+
+for (var Day = 0; Day < headers.length; Day++) {
+	bestTimesForDays.push(getConvenientTime(responses, Day));
+	for (var count = 0; count < bestTimesForDays[bestTimesForDays.length - 1].length; count++) {
+		xval.push(headers[Day]);
+		yval.push(bestTimesForDays[bestTimesForDays.length - 1][count][1]);
+		var RightSize = (bestTimesForDays[bestTimesForDays.length - 1][count][0] / responses.length) * 100;
+		sizes.push(RightSize);
+		texts.push(bestTimesForDays[bestTimesForDays.length - 1][count][0]);
+	}
+  }
+
+
+//Calculate Bubble Ratio To avoid Overlap
+var max = Math.max.apply(null,sizes);
+var sizeref = 2.0 * max / (10 **2)
+
+
+
+var Trace1 = {
+x:xval,
+y:yval,
+text:texts,
+mode:'markers+text',
+marker:{
+size:sizes,
+sizeref:sizeref,
+//sizemode:'area'
+}
+};
+
+var data = [Trace1]
+var layout = {
+  showlegend: false,
+};
+
+Plotly.plot("graph",data,layout)
+  
+}
+
+
+
+</script>
+
+
+<div class="w3-container w3-teal">
+ <h1>Welcome To This Barebones Version Of Our Website</h1>
+</div>
+
+<div class = "w3-container w3-teal" style="height:10%">
+</div>
+
+<div class="w3-container w3-teal">
+Input Meeting CSV Data:<textarea  type="text" id="InputData" style="height:20%;width:100%"></textarea>
+<input type="file" id="csvFile"/>
+</div>
+<div class="w3-container w3-teal" align="center" >
+<button  onclick="process()" style="height:50;width:50%;background-color:#143d35;color:fcfcfc"/>Generate Graph</div>
+
+
+<div id="graph" class="w3-container w3-teal" style="width:100%;height:90%">
+
+</div>
+
+
+<script>
+	csvInput = document.getElementById("csvFile")
+	
+	if (window.File && window.FileReader && window.FileList && window.Blob) {//File APIs supported
+    } else {
+         alert('Your browser does not fully support file uploads, please input csv data manually');
+    }
+	
+	csvInput.onchange = function(e) 
+	{
+		csvFile = e.target.files[0]
+		
+		
+		var r = new FileReader();
+		
+		
+		r.onload = function(e)
+		{//When Done Reading
+			textBox = document.getElementById("InputData");
+			textBox.value = e.target.result;
+			
+		
+		}
+		r.readAsText(csvFile);
+	}
+</script>
+
+
+
 </body>
 </html>
